@@ -1,7 +1,6 @@
 import streamlit as st
 import websocket
 import json
-import time
 import pandas as pd
 from datetime import datetime
 
@@ -55,25 +54,25 @@ class DerivAPI:
         response = json.loads(self.ws.recv())
         return response
 
-# === Initialize Memory ===
+# === Initialize Session States ===
 if "active_trades" not in st.session_state:
     st.session_state.active_trades = []
 if "trade_history" not in st.session_state:
     st.session_state.trade_history = []
 
-# === Settings ===
+# === Settings Sidebar ===
 st.sidebar.title("⚙️ Settings")
 api_token = st.sidebar.text_input("🔑 Deriv API Token", type="password")
 stake_amount = st.sidebar.number_input("💵 Stake Amount", min_value=0.20, value=0.20, step=0.01)
 
 st.title("🚀 KIBOKO YAO SNIPER TERMINAL 2.0")
 
-# === Connect ===
+# === Connect to Deriv ===
 if api_token:
     api = DerivAPI(api_token)
 
-    # === Simulated Incoming Signal Section ===
-    st.header("📡 Incoming Sniper Signals (Manual Simulation)")
+    # === Incoming Signal Manual Section ===
+    st.header("📡 Incoming Sniper Signals (Manual Accept)")
 
     selected_symbol = st.selectbox("📈 Select Symbol", ["R_10", "R_25", "R_50", "R_75", "R_100"])
     signal_type = st.selectbox("🎯 Signal Type", ["Buy Stop", "Sell Stop"])
@@ -101,7 +100,7 @@ if api_token:
         }
         st.session_state.active_trades.append(new_trade)
 
-    # === Active Trades Table ===
+    # === Active Trades Monitor ===
     st.header("📋 Active Trades Monitor")
 
     if st.session_state.active_trades:
@@ -147,7 +146,7 @@ if api_token:
     else:
         st.info("🔍 No active trades yet.")
 
-    # === Trade History Table ===
+    # === Trade History ===
     st.header("📜 Trade History")
 
     if st.session_state.trade_history:
