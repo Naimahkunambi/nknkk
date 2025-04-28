@@ -1,10 +1,27 @@
-import streamlit as st
-import websocket
-import json
-import pandas as pd
-from datetime import datetime
+# 🚀 Kiboko Yao Sniper 2.5
+# ✅ Auto Scan 4H -> Confirm 15M -> Accept to Place Trade
 
-# === DERIV API CONNECTION ===
+import time
+import json
+import requests
+import streamlit as st
+from datetime import datetime
+try:
+    import websocket
+except ImportError:
+    import os
+    os.system("pip install websocket-client")
+    import websocket
+
+# ========== SETTINGS ==========
+API_TOKEN = st.secrets["DERIV_API_TOKEN"]
+APP_ID = st.secrets["DERIV_APP_ID"]
+
+SYMBOLS = ["R_10", "R_25", "R_50", "R_75", "R_100"]
+BASE_URL = "wss://ws.binaryws.com/websockets/v3?app_id=" + APP_ID
+REFRESH_INTERVAL = 15 * 60  # 15 minutes
+
+# ========== API CLASS ==========
 class DerivAPI:
     def __init__(self, token):
         self.token = token
@@ -12,149 +29,148 @@ class DerivAPI:
         self.connect()
 
     def connect(self):
-        url = f"wss://ws.binaryws.com/websockets/v3?app_id=70487"
-        self.ws = websocket.create_connection(url)
+        self.ws = websocket.create_connection(BASE_URL)
         self.ws.send(json.dumps({"authorize": self.token}))
-        response = json.loads(self.ws.recv())
-        if 'error' in response:
-            raise Exception(f"Authorization Failed: {response['error']['message']}")
-        print("✅ Connected to Deriv")
+        auth = json.loads(self.ws.recv())
+        if 'error' in auth:
+            raise Exception(f"Authorization Failed: {auth['error']['message']}")
+        print("✅ Authorized")
 
-    def get_candles(self, symbol, count=200, timeframe=900):
-        request = {
+    def get_candles(self, symbol, count=100, timeframe=900):
+        req = {
             "ticks_history": symbol,
             "end": "latest",
             "count": count,
             "style": "candles",
             "granularity": timeframe
         }
-        self.ws.send(json.dumps(request))
-        response = json.loads(self.ws.recv())
-        if 'error' in response:
-            raise Exception(f"Error: {response['error']['message']}")
-        return response.get('candles', [])
+        self.ws.send(json.dumps(req))
+        res = json.loads(self.ws.recv())
+        if 'error' in res:
+            raise Exception(f"API Error: {res['error']['message']}")
+        return res.get('candles', [])
 
-    def place_order(self, symbol, action, stake):
-        contract_type = "CALL" if action == "buy" else "PUT"
-        order = {
+    def place_trade(self, symbol, action, amount):
+        buy_type = "CALL" if action == "buy" else "PUT"
+        req = {
             "buy": 1,
-            "price": stake,
+            "price": amount,
             "parameters": {
-                "amount": stake,
+                "amount": amount,
                 "basis": "stake",
-                "contract_type": contract_type,
+                "contract_type": buy_type,
                 "currency": "USD",
-                "symbol": symbol,
                 "duration": 5,
-                "duration_unit": "m",
+                "duration_unit": "t",
+                "symbol": symbol,
                 "product_type": "basic"
             }
         }
-        self.ws.send(json.dumps(order))
-        response = json.loads(self.ws.recv())
-        return response
+        self.ws.send(json.dumps(req))
+        res = json.loads(self.ws.recv())
+        return res
 
-# === Initialize Session States ===
-if "active_trades" not in st.session_state:
-    st.session_state.active_trades = []
-if "trade_history" not in st.session_state:
-    st.session_state.trade_history = []
+# ========== DETECTOR CLASS ==========
+class PatternDetector:
+    def detect_engulfing(self, candles):
+        signals = []
+        for i in range(1, len(candles)):
+            prev = candles[i - 1]
+            curr = candles[i]
+            if prev['close'] < prev['open'] and curr['close'] > curr['open']:
+                signals.append(("buy", i))
+            if prev['close'] > prev['open'] and curr['close'] < curr['open']:
+                signals.append(("sell", i))
+        return signals
 
-# === Settings Sidebar ===
-st.sidebar.title("⚙️ Settings")
-api_token = st.sidebar.text_input("🔑 Deriv API Token", type="password")
-stake_amount = st.sidebar.number_input("💵 Stake Amount", min_value=0.20, value=0.20, step=0.01)
+def fib_levels(high, low):
+    diff = high - low
+    sl = high - 0.786 * diff
+    tp1 = high + 0.272 * diff
+    tp2 = high + 0.618 * diff
+    return sl, tp1, tp2
 
-st.title("🚀 KIBOKO YAO SNIPER TERMINAL 2.0")
+# ========== GLOBAL STORAGE ==========
+signals = []
+open_trades = []
 
-# === Connect to Deriv ===
-if api_token:
-    api = DerivAPI(api_token)
+# ========== STREAMLIT DASH ==========
+st.set_page_config(page_title="🚀 Kiboko Yao Sniper Terminal", layout="wide")
+st.title("🚀 KIBOKO YAO SNIPER TERMINAL 2.5")
 
-    # === Incoming Signal Manual Section ===
-    st.header("📡 Incoming Sniper Signals (Manual Accept)")
+stake = st.sidebar.number_input("💵 Stake Amount ($)", min_value=0.2, value=0.35, step=0.01)
+refresh_button = st.sidebar.button("🔄 Manual Refresh Scanner")
 
-    selected_symbol = st.selectbox("📈 Select Symbol", ["R_10", "R_25", "R_50", "R_75", "R_100"])
-    signal_type = st.selectbox("🎯 Signal Type", ["Buy Stop", "Sell Stop"])
-    entry_price = st.number_input("🎯 Entry Price", min_value=0.01)
-    stop_loss = st.number_input("🛡 Stop Loss", min_value=0.01)
-    tp1 = st.number_input("🎯 TP1", min_value=0.01)
-    tp2 = st.number_input("🎯 TP2", min_value=0.01)
+api = DerivAPI(API_TOKEN)
+detector = PatternDetector()
 
-    if st.button("✅ Accept Trade and Place Order"):
-        action = "buy" if signal_type == "Buy Stop" else "sell"
-        trade_response = api.place_order(selected_symbol, action, stake_amount)
-        st.success(f"✅ Real Trade Placed on {selected_symbol}!")
-        st.json(trade_response)
+# ========== SCAN FUNCTION ==========
+def scan_market():
+    global signals
+    signals = []
+    for sym in SYMBOLS:
+        candles_4h = api.get_candles(sym, count=50, timeframe=14400)
+        if not candles_4h:
+            continue
+        engulf_4h = detector.detect_engulfing(candles_4h)
+        if engulf_4h:
+            last_signal, idx = engulf_4h[-1]
+            last_candle_4h = candles_4h[idx]
+            # Now Confirm on 15M
+            candles_15m = api.get_candles(sym, count=50, timeframe=900)
+            last_15m = candles_15m[-1]
+            signal_info = {
+                "symbol": sym,
+                "type": last_signal,
+                "entry": last_15m['close'],
+                "sl": last_15m['high'] if last_signal == "sell" else last_15m['low'],
+                "tp1": last_15m['close'] + 3 if last_signal == "buy" else last_15m['close'] - 3,
+                "tp2": last_15m['close'] + 6 if last_signal == "buy" else last_15m['close'] - 6,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            signals.append(signal_info)
 
-        new_trade = {
-            "symbol": selected_symbol,
-            "action": action.upper(),
-            "stake": stake_amount,
-            "entry_price": entry_price,
-            "sl": stop_loss,
-            "tp1": tp1,
-            "tp2": tp2,
-            "status": "Running",
-            "opened_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        st.session_state.active_trades.append(new_trade)
+# ========== DISPLAY SIGNALS ==========
+def show_signals():
+    if signals:
+        for idx, sig in enumerate(signals):
+            col1, col2 = st.columns([3,1])
+            with col1:
+                st.markdown(f"**{sig['symbol']} | {sig['type'].upper()}**")
+                st.markdown(f"🎯 Entry: {sig['entry']} | 🛡 SL: {sig['sl']} | 🏁 TP1: {sig['tp1']} | 🏁 TP2: {sig['tp2']}")
+                st.caption(f"Detected: {sig['timestamp']}")
+            with col2:
+                if st.button(f"✅ Accept {idx}", key=f"accept_{idx}"):
+                    place_trade(sig)
 
-    # === Active Trades Monitor ===
-    st.header("📋 Active Trades Monitor")
+# ========== PLACE TRADE ==========
+def place_trade(sig):
+    try:
+        res = api.place_trade(sig['symbol'], sig['type'], stake)
+        open_trades.append({
+            "symbol": sig['symbol'],
+            "type": sig['type'],
+            "entry": sig['entry'],
+            "sl": sig['sl'],
+            "tp1": sig['tp1'],
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        st.success(f"🚀 Trade Placed: {sig['symbol']} {sig['type'].upper()}")
+    except Exception as e:
+        st.error(f"❌ Trade Error: {e}")
 
-    if st.session_state.active_trades:
-        updated_trades = []
-        completed_trades = []
-
-        for trade in st.session_state.active_trades:
-            try:
-                latest_candle = api.get_candles(trade["symbol"], count=1, timeframe=900)[-1]
-                live_price = latest_candle['close']
-            except Exception as e:
-                st.error(f"⚠️ Error fetching live price for {trade['symbol']}: {e}")
-                continue
-
-            if trade["action"] == "BUY":
-                if live_price >= trade["tp1"]:
-                    trade["status"] = "Win (TP1 Hit!) 🟢"
-                elif live_price <= trade["sl"]:
-                    trade["status"] = "Loss (SL Hit!) 🔴"
-            elif trade["action"] == "SELL":
-                if live_price <= trade["tp1"]:
-                    trade["status"] = "Win (TP1 Hit!) 🟢"
-                elif live_price >= trade["sl"]:
-                    trade["status"] = "Loss (SL Hit!) 🔴"
-
-            if "Win" in trade["status"] or "Loss" in trade["status"]:
-                completed_trades.append(trade)
-            else:
-                updated_trades.append(trade)
-
-        st.session_state.active_trades = updated_trades
-        st.session_state.trade_history.extend(completed_trades)
-
-        if updated_trades:
-            df_active = pd.DataFrame(updated_trades)
-            st.dataframe(df_active.style.applymap(
-                lambda v: "background-color: lightgreen" if "Win" in v else "background-color: lightcoral" if "Loss" in v else "",
-                subset=["status"]
-            ))
-        else:
-            st.info("🎯 No running trades. All done!")
-
+# ========== DISPLAY OPEN TRADES ==========
+def show_open_trades():
+    st.header("📈 Active Trades")
+    if open_trades:
+        for trade in open_trades:
+            st.info(f"{trade['symbol']} {trade['type'].upper()} | Entry: {trade['entry']} | TP1: {trade['tp1']} | SL: {trade['sl']}")
     else:
-        st.info("🔍 No active trades yet.")
+        st.warning("No open trades yet.")
 
-    # === Trade History ===
-    st.header("📜 Trade History")
+# ========== MAIN LOOP ==========
+if refresh_button or (len(signals) == 0):
+    scan_market()
 
-    if st.session_state.trade_history:
-        df_history = pd.DataFrame(st.session_state.trade_history)
-        st.dataframe(df_history)
-    else:
-        st.info("No completed trades yet.")
-
-else:
-    st.warning("⚠️ Please input your Deriv API Token to connect!")
-
+show_signals()
+show_open_trades()
