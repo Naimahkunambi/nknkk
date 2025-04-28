@@ -1,4 +1,4 @@
-# 🚀 Kiboko Yao Sniper 2.5
+# 🚀 Kiboko Yao Sniper 2.5 (Hardcoded Token Version)
 # ✅ Auto Scan 4H -> Confirm 15M -> Accept to Place Trade
 
 import time
@@ -14,11 +14,11 @@ except ImportError:
     import websocket
 
 # ========== SETTINGS ==========
-API_TOKEN = st.secrets["DERIV_API_TOKEN"]
-APP_ID = st.secrets["DERIV_APP_ID"]
+API_TOKEN = "kabW2n8VL3raHpF"  # <- Your real token here
+APP_ID = "70487"               # <- Your real App ID here
 
 SYMBOLS = ["R_10", "R_25", "R_50", "R_75", "R_100"]
-BASE_URL = "wss://ws.binaryws.com/websockets/v3?app_id=" + APP_ID
+BASE_URL = f"wss://ws.binaryws.com/websockets/v3?app_id={APP_ID}"
 REFRESH_INTERVAL = 15 * 60  # 15 minutes
 
 # ========== API CLASS ==========
