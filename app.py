@@ -1,176 +1,170 @@
-# 🚀 Kiboko Yao Sniper 2.5 (Hardcoded Token Version)
-# ✅ Auto Scan 4H -> Confirm 15M -> Accept to Place Trade
+# 🚀 Kiboko Yao Sniper Terminal 2.0 Final
 
-import time
-import json
-import requests
 import streamlit as st
+import requests
+import json
+import time
 from datetime import datetime
-try:
-    import websocket
-except ImportError:
-    import os
-    os.system("pip install websocket-client")
-    import websocket
+import pandas as pd
+import plotly.graph_objects as go
+import websocket
+import threading
 
-# ========== SETTINGS ==========
-API_TOKEN = "kabW2n8VL3raHpF"  # <- Your real token here
-APP_ID = "70487"               # <- Your real App ID here
+# =========================
+# SETTINGS (YOUR INFO)
+# =========================
+API_TOKEN = "kabW2n8VL3raHpF"  # Your Deriv API Token
+APP_ID = "70487"               # Your App ID
+SIGNAL_URL = "https://your-fastapi-signal-server.com/signals"  # Your FastAPI server URL
+STAKE = 0.20  # Starting $ per trade
 
-SYMBOLS = ["R_10", "R_25", "R_50", "R_75", "R_100"]
-BASE_URL = f"wss://ws.binaryws.com/websockets/v3?app_id={APP_ID}"
-REFRESH_INTERVAL = 15 * 60  # 15 minutes
+# =========================
+# GLOBAL STORAGE
+# =========================
+open_trades = []
+closed_trades = []
+sniper_signals = []
 
-# ========== API CLASS ==========
+# =========================
+# API Connection to Deriv
+# =========================
 class DerivAPI:
-    def __init__(self, token):
+    def __init__(self, token, app_id):
         self.token = token
+        self.app_id = app_id
         self.ws = None
         self.connect()
 
     def connect(self):
-        self.ws = websocket.create_connection(BASE_URL)
+        self.ws = websocket.create_connection(f"wss://ws.binaryws.com/websockets/v3?app_id={self.app_id}")
         self.ws.send(json.dumps({"authorize": self.token}))
         auth = json.loads(self.ws.recv())
         if 'error' in auth:
             raise Exception(f"Authorization Failed: {auth['error']['message']}")
-        print("✅ Authorized")
 
-    def get_candles(self, symbol, count=100, timeframe=900):
-        req = {
-            "ticks_history": symbol,
-            "end": "latest",
-            "count": count,
-            "style": "candles",
-            "granularity": timeframe
-        }
-        self.ws.send(json.dumps(req))
-        res = json.loads(self.ws.recv())
-        if 'error' in res:
-            raise Exception(f"API Error: {res['error']['message']}")
-        return res.get('candles', [])
-
-    def place_trade(self, symbol, action, amount):
-        buy_type = "CALL" if action == "buy" else "PUT"
-        req = {
+    def place_market_order(self, symbol, action, stake):
+        contract_type = "CALL" if action == "BUY" else "PUT"
+        order = {
             "buy": 1,
-            "price": amount,
+            "price": stake,
             "parameters": {
-                "amount": amount,
+                "amount": stake,
                 "basis": "stake",
-                "contract_type": buy_type,
+                "contract_type": contract_type,
                 "currency": "USD",
+                "symbol": symbol,
                 "duration": 5,
                 "duration_unit": "t",
-                "symbol": symbol,
                 "product_type": "basic"
             }
         }
-        self.ws.send(json.dumps(req))
-        res = json.loads(self.ws.recv())
-        return res
+        self.ws.send(json.dumps(order))
+        response = json.loads(self.ws.recv())
+        return response
 
-# ========== DETECTOR CLASS ==========
-class PatternDetector:
-    def detect_engulfing(self, candles):
-        signals = []
-        for i in range(1, len(candles)):
-            prev = candles[i - 1]
-            curr = candles[i]
-            if prev['close'] < prev['open'] and curr['close'] > curr['open']:
-                signals.append(("buy", i))
-            if prev['close'] > prev['open'] and curr['close'] < curr['open']:
-                signals.append(("sell", i))
-        return signals
-
-def fib_levels(high, low):
-    diff = high - low
-    sl = high - 0.786 * diff
-    tp1 = high + 0.272 * diff
-    tp2 = high + 0.618 * diff
-    return sl, tp1, tp2
-
-# ========== GLOBAL STORAGE ==========
-signals = []
-open_trades = []
-
-# ========== STREAMLIT DASH ==========
-st.set_page_config(page_title="🚀 Kiboko Yao Sniper Terminal", layout="wide")
-st.title("🚀 KIBOKO YAO SNIPER TERMINAL 2.5")
-
-stake = st.sidebar.number_input("💵 Stake Amount ($)", min_value=0.2, value=0.35, step=0.01)
-refresh_button = st.sidebar.button("🔄 Manual Refresh Scanner")
-
-api = DerivAPI(API_TOKEN)
-detector = PatternDetector()
-
-# ========== SCAN FUNCTION ==========
-def scan_market():
-    global signals
-    signals = []
-    for sym in SYMBOLS:
-        candles_4h = api.get_candles(sym, count=50, timeframe=14400)
-        if not candles_4h:
-            continue
-        engulf_4h = detector.detect_engulfing(candles_4h)
-        if engulf_4h:
-            last_signal, idx = engulf_4h[-1]
-            last_candle_4h = candles_4h[idx]
-            # Now Confirm on 15M
-            candles_15m = api.get_candles(sym, count=50, timeframe=900)
-            last_15m = candles_15m[-1]
-            signal_info = {
-                "symbol": sym,
-                "type": last_signal,
-                "entry": last_15m['close'],
-                "sl": last_15m['high'] if last_signal == "sell" else last_15m['low'],
-                "tp1": last_15m['close'] + 3 if last_signal == "buy" else last_15m['close'] - 3,
-                "tp2": last_15m['close'] + 6 if last_signal == "buy" else last_15m['close'] - 6,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            signals.append(signal_info)
-
-# ========== DISPLAY SIGNALS ==========
-def show_signals():
-    if signals:
-        for idx, sig in enumerate(signals):
-            col1, col2 = st.columns([3,1])
-            with col1:
-                st.markdown(f"**{sig['symbol']} | {sig['type'].upper()}**")
-                st.markdown(f"🎯 Entry: {sig['entry']} | 🛡 SL: {sig['sl']} | 🏁 TP1: {sig['tp1']} | 🏁 TP2: {sig['tp2']}")
-                st.caption(f"Detected: {sig['timestamp']}")
-            with col2:
-                if st.button(f"✅ Accept {idx}", key=f"accept_{idx}"):
-                    place_trade(sig)
-
-# ========== PLACE TRADE ==========
-def place_trade(sig):
+# =========================
+# FETCH SIGNALS FROM SERVER
+# =========================
+def fetch_sniper_signals():
     try:
-        res = api.place_trade(sig['symbol'], sig['type'], stake)
-        open_trades.append({
-            "symbol": sig['symbol'],
-            "type": sig['type'],
-            "entry": sig['entry'],
-            "sl": sig['sl'],
-            "tp1": sig['tp1'],
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-        st.success(f"🚀 Trade Placed: {sig['symbol']} {sig['type'].upper()}")
+        response = requests.get(SIGNAL_URL)
+        if response.status_code == 200:
+            return response.json()["signals"]
     except Exception as e:
-        st.error(f"❌ Trade Error: {e}")
+        st.error(f"Signal Fetch Error: {e}")
+    return []
 
-# ========== DISPLAY OPEN TRADES ==========
-def show_open_trades():
-    st.header("📈 Active Trades")
+# =========================
+# LIVE TRADE STATUS MONITOR
+# =========================
+def update_trade_status():
+    for trade in open_trades[:]:
+        now_price = fetch_symbol_price(trade['symbol'])
+        if trade['direction'] == "BUY":
+            if now_price >= trade['tp1']:
+                closed_trades.append({**trade, "result": "Win"})
+                open_trades.remove(trade)
+            elif now_price <= trade['sl']:
+                closed_trades.append({**trade, "result": "Loss"})
+                open_trades.remove(trade)
+        else:
+            if now_price <= trade['tp1']:
+                closed_trades.append({**trade, "result": "Win"})
+                open_trades.remove(trade)
+            elif now_price >= trade['sl']:
+                closed_trades.append({**trade, "result": "Loss"})
+                open_trades.remove(trade)
+
+def fetch_symbol_price(symbol):
+    try:
+        api_url = f"https://api.deriv.com/api/v1/active_symbols"
+        response = requests.get(api_url)
+        data = response.json()
+        for sym in data["active_symbols"]:
+            if sym["symbol"] == symbol:
+                return sym["spot"]
+    except:
+        pass
+    return None
+
+# =========================
+# STREAMLIT UI
+# =========================
+st.set_page_config(page_title="🚀 Kiboko Yao Sniper 2.0", layout="wide")
+st.title("🚀 Kiboko Yao Sniper 2.0 Terminal")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.header("🛰 Live Signals")
+    st.write("Automatically fetched every 1 hour.")
+
+    for signal in sniper_signals:
+        with st.expander(f"🛡 {signal['symbol']} | {signal['signal_type']}"):
+            st.metric("Entry Price", signal['entry'])
+            st.metric("Stop Loss", signal['sl'])
+            st.metric("TP1", signal['tp1'])
+            st.metric("TP2", signal['tp2'])
+            st.text(signal['reason'])
+            if st.button(f"✅ Accept Trade ({signal['symbol']})"):
+                deriv.place_market_order(signal['symbol'], "BUY" if signal['signal_type'] == "Buy Stop" else "SELL", STAKE)
+                open_trades.append({
+                    "symbol": signal['symbol'],
+                    "direction": "BUY" if signal['signal_type'] == "Buy Stop" else "SELL",
+                    "entry": signal['entry'],
+                    "sl": signal['sl'],
+                    "tp1": signal['tp1'],
+                    "tp2": signal['tp2'],
+                    "open_time": datetime.now()
+                })
+
+with col2:
+    st.header("📊 Open Trades")
     if open_trades:
-        for trade in open_trades:
-            st.info(f"{trade['symbol']} {trade['type'].upper()} | Entry: {trade['entry']} | TP1: {trade['tp1']} | SL: {trade['sl']}")
+        df = pd.DataFrame(open_trades)
+        st.dataframe(df)
     else:
-        st.warning("No open trades yet.")
+        st.info("No active trades yet.")
 
-# ========== MAIN LOOP ==========
-if refresh_button or (len(signals) == 0):
-    scan_market()
+    st.header("🏆 Closed Trades")
+    if closed_trades:
+        df_closed = pd.DataFrame(closed_trades)
+        st.dataframe(df_closed)
+    else:
+        st.info("No closed trades yet.")
 
-show_signals()
-show_open_trades()
+# =========================
+# BACKGROUND UPDATER
+# =========================
+def sniper_background():
+    global sniper_signals
+    while True:
+        sniper_signals = fetch_sniper_signals()
+        update_trade_status()
+        time.sleep(3600)  # refresh every hour
+
+if 'thread_started' not in st.session_state:
+    deriv = DerivAPI(API_TOKEN, APP_ID)
+    threading.Thread(target=sniper_background, daemon=True).start()
+    st.session_state['thread_started'] = True
+
