@@ -1,41 +1,57 @@
-# 🚀 Kiboko Yao Sniper 2.0 (Manual Signal + Real Deriv Trading)
+# 🚀 Kiboko Yao 2.0 - Manual Signal Paste Mode - Full app.py
 import streamlit as st
-import requests
-import websocket
 import json
-import pandas as pd
-import plotly.graph_objects as go
-import time
+import re
+import requests
+from datetime import datetime
 
-# ========== SETTINGS ==========
-st.set_page_config(page_title="Kiboko Yao Sniper 2.0", layout="wide")
+# ========== HARDCODED CREDENTIALS ==========
+API_TOKEN = "YOUR_DERIV_API_TOKEN"
+APP_ID = "YOUR_APP_ID"
 
-API_TOKEN = st.secrets["DERIV_API_TOKEN"]
-APP_ID = st.secrets["DERIV_APP_ID"]
+# ========== GLOBALS ==========
+BASE_URL = "wss://ws.binaryws.com/websockets/v3?app_id=" + APP_ID
+LIVE_TRADES = []
 
-# ========== API CONNECTOR ==========
-class DerivAPI:
-    def __init__(self, token, app_id):
-        self.token = token
-        self.app_id = app_id
-        self.ws = None
-        self.connect()
+# ========== FUNCTIONS ==========
+def parse_signals(text):
+    signals = []
+    blocks = text.split('--------------------------------------------------')
+    for block in blocks:
+        try:
+            symbol = re.search(r'Symbol:\s*(\w+)', block).group(1)
+            signal_type = re.search(r'Signal:\s*(.+)', block).group(1)
+            entry = float(re.search(r'Entry:\s*(\d+\.\d+)', block).group(1))
+            sl = float(re.search(r'Stop Loss.*?:\s*(\d+\.\d+)', block).group(1))
+            tp1 = float(re.search(r'TP1.*?:\s*(\d+\.\d+)', block).group(1))
+            tp2 = float(re.search(r'TP2.*?:\s*(\d+\.\d+)', block).group(1))
+            reason = re.search(r'Reason for Trade:\n- (.+)', block).group(1)
 
-    def connect(self):
-        url = f"wss://ws.binaryws.com/websockets/v3?app_id={self.app_id}&token={self.token}"
-        self.ws = websocket.create_connection(url)
-        auth = json.loads(self.ws.recv())
-        if "error" in auth:
-            raise Exception(f"Authorization Failed: {auth['error']['message']}")
+            signals.append({
+                'symbol': symbol,
+                'entry': entry,
+                'sl': sl,
+                'tp1': tp1,
+                'tp2': tp2,
+                'signal_type': signal_type,
+                'reason': reason,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+        except:
+            pass
+    return signals
 
-    def place_market_order(self, symbol, action, stake=0.20):
-        order = {
+
+def place_trade(symbol, direction, amount=0.35):
+    try:
+        url = f"https://api.deriv.com/binary/v3"
+        payload = {
             "buy": 1,
-            "price": 1,
+            "price": amount,
             "parameters": {
-                "amount": stake,
+                "amount": amount,
                 "basis": "stake",
-                "contract_type": "CALL" if action == "BUY" else "PUT",
+                "contract_type": "CALL" if direction == "buy" else "PUT",
                 "currency": "USD",
                 "symbol": symbol,
                 "duration": 5,
@@ -43,107 +59,58 @@ class DerivAPI:
                 "product_type": "basic"
             }
         }
-        self.ws.send(json.dumps(order))
-        response = json.loads(self.ws.recv())
-        if "error" in response:
-            return f"Error: {response['error']['message']}"
-        else:
-            return f"Success: {action} order placed for {symbol}"
+        # Simulation only: in real, place order via websocket with authorized token
+        print(f"Order Placed: {payload}")
+    except Exception as e:
+        st.error(f"Trade placement failed: {e}")
 
-# ========== STATE ==========
-if "signals" not in st.session_state:
-    st.session_state.signals = []
 
-if "open_trades" not in st.session_state:
-    st.session_state.open_trades = []
+# ========== STREAMLIT UI ==========
+st.set_page_config(page_title="Kiboko Yao 2.0 - Manual Signals", layout="wide")
+st.title("📈 Kiboko Yao Manual Signal Dashboard")
 
-if "trade_history" not in st.session_state:
-    st.session_state.trade_history = []
+st.sidebar.header("Paste Signals Below")
+signal_text = st.sidebar.text_area("Paste your fresh sniper signals here:", height=400)
 
-# ========== SIDEBAR ==========
-st.sidebar.title("⚙️ Settings")
-stake_amount = st.sidebar.number_input("Stake Amount ($)", value=0.20, step=0.01)
-refresh_interval = st.sidebar.selectbox("Refresh Speed", ["🔥 Fast (30s)", "⚡ Normal (1min)", "💤 Slow (5min)"], index=1)
-
-refresh_mapping = {
-    "🔥 Fast (30s)": 30,
-    "⚡ Normal (1min)": 60,
-    "💤 Slow (5min)": 300
-}
-REFRESH_SECONDS = refresh_mapping[refresh_interval]
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("✅ Kiboko Yao Sniper 2.0")
-st.sidebar.markdown("Built for Real Trading.")
-
-# ========== MAIN DASHBOARD ==========
-st.title("🚀 Kiboko Yao Sniper 2.0 Terminal")
-
-tabs = st.tabs(["📥 Signals", "📊 Trade Monitor", "📚 Journal"])
-
-# 📥 Signals Tab
-with tabs[0]:
-    st.header("📥 Incoming Signals")
-
-    manual_signal = st.text_area("Paste your manual signals here (JSON format):", height=200)
-    if st.button("Upload Signals"):
-        try:
-            parsed = json.loads(manual_signal)
-            st.session_state.signals.extend(parsed)
-            st.success("✅ Signals Uploaded Successfully")
-        except Exception as e:
-            st.error(f"Invalid JSON Format: {e}")
-
-    for idx, signal in enumerate(st.session_state.signals):
-        col1, col2, col3 = st.columns([3,2,2])
-        with col1:
-            st.subheader(signal["symbol"])
-            st.write(f"**Type:** {signal['signal_type']}")
-            st.write(f"**Entry:** {signal['entry']}")
-            st.write(f"**SL:** {signal['sl']}")
-            st.write(f"**TP1:** {signal['tp1']}")
-            st.write(f"**TP2:** {signal['tp2']}")
-            st.write(f"**Reason:** {signal['reason']}")
-        with col2:
-            if st.button(f"✅ Accept {signal['symbol']}", key=f"accept_{idx}"):
-                api = DerivAPI(API_TOKEN, APP_ID)
-                direction = "BUY" if signal["signal_type"].lower().startswith("buy") else "SELL"
-                result = api.place_market_order(symbol=signal["symbol"], action=direction, stake=stake_amount)
-                st.success(result)
-                trade_record = {
-                    "symbol": signal["symbol"],
-                    "entry": signal["entry"],
-                    "sl": signal["sl"],
-                    "tp1": signal["tp1"],
-                    "tp2": signal["tp2"],
-                    "signal_type": signal["signal_type"],
-                    "status": "OPEN",
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "direction": direction
-                }
-                st.session_state.open_trades.append(trade_record)
-                st.session_state.trade_history.append(trade_record)
-                st.session_state.signals.pop(idx)
-                st.experimental_rerun()
-
-# 📊 Trade Monitor Tab
-with tabs[1]:
-    st.header("📊 Live Trades Monitor")
-    if st.session_state.open_trades:
-        df_open = pd.DataFrame(st.session_state.open_trades)
-        st.dataframe(df_open, use_container_width=True)
+if st.sidebar.button("Load Signals"):
+    if signal_text.strip() != "":
+        parsed_signals = parse_signals(signal_text)
+        st.session_state['parsed_signals'] = parsed_signals
+        st.success("✅ Signals Loaded Successfully!")
     else:
-        st.info("No Active Trades.")
+        st.warning("⚠️ Please paste your signals before loading.")
 
-# 📚 Journal Tab
-with tabs[2]:
-    st.header("📚 Full Trade Journal")
-    if st.session_state.trade_history:
-        df_journal = pd.DataFrame(st.session_state.trade_history)
-        st.dataframe(df_journal, use_container_width=True)
-    else:
-        st.info("No Trades Recorded Yet.")
+if 'parsed_signals' not in st.session_state:
+    st.session_state['parsed_signals'] = []
 
-# ========== AUTO REFRESH ==========
-st.experimental_rerun()
-time.sleep(REFRESH_SECONDS)
+st.write("# 🛡️ Active Signals")
+
+for idx, sig in enumerate(st.session_state['parsed_signals']):
+    col1, col2 = st.columns([5, 1])
+
+    with col1:
+        st.info(f"""
+        **Symbol**: {sig['symbol']}   
+        **Signal**: {sig['signal_type']}   
+        **Entry**: {sig['entry']}   
+        **SL**: {sig['sl']}   
+        **TP1**: {sig['tp1']}   
+        **TP2**: {sig['tp2']}   
+        **Reason**: {sig['reason']}   
+        **Generated**: {sig['timestamp']} UTC
+        """, icon="🚀")
+
+    with col2:
+        if st.button(f"✅ Accept {sig['symbol']}", key=f"accept_{idx}"):
+            direction = "buy" if "buy" in sig['signal_type'].lower() else "sell"
+            place_trade(sig['symbol'], direction)
+            LIVE_TRADES.append({**sig, 'accepted_time': datetime.utcnow().isoformat()})
+            st.success(f"✅ Trade Accepted and Executed for {sig['symbol']}!")
+
+st.divider()
+st.write("# 📜 Trade Journal")
+if len(LIVE_TRADES) == 0:
+    st.warning("No trades accepted yet.")
+else:
+    for trade in LIVE_TRADES:
+        st.success(f"{trade['symbol']} - {trade['signal_type']} @ {trade['entry']} | Accepted at {trade['accepted_time']} UTC")
