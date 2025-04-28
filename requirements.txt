@@ -1,4 +1,6 @@
 streamlit
 websocket-client
 requests
+pandas
+plotly
 python-dotenv
