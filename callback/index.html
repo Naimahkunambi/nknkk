@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111111" />
+  <title>Sani Arb</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><div><p class="eyebrow">DERIV DEMO ARBITRAGE LAB</p><h1>Sani Arb</h1></div><div id="modePill" class="pill neutral">PUBLIC SCANNER</div></header>
+    <section class="hero card"><div><p class="muted">Strategy</p><h2>Touch + No Touch</h2><p class="muted">Same symbol · same barrier · same expiry · same payout basis</p></div><button id="emergencyBtn" class="danger" disabled>Emergency stop</button></section>
+    <section class="grid two">
+      <div class="card">
+        <h3>Scanner settings</h3>
+        <label>Symbol<select id="symbol"><option value="R_100">Volatility 100 Index</option><option value="R_75">Volatility 75 Index</option><option value="R_50">Volatility 50 Index</option><option value="R_25">Volatility 25 Index</option><option value="R_10">Volatility 10 Index</option></select></label>
+        <div class="grid two tight"><label>Barrier<input id="barrier" value="+1" inputmode="decimal" /></label><label>Duration<div class="inline"><input id="duration" type="number" min="1" value="2" /><select id="durationUnit"><option value="m">min</option><option value="s">sec</option></select></div></label></div>
+        <div class="grid two tight"><label>Target payout (USD)<input id="targetPayout" type="number" min="0.35" step="0.01" value="1.00" /></label><label>Minimum edge (USD)<input id="minEdge" type="number" min="0" step="0.001" value="0.01" /></label></div>
+        <label>Stable quote checks before arming<input id="stableChecks" type="number" min="1" max="20" value="3" /></label>
+        <div class="actions"><button id="startScannerBtn" class="primary">Start live scanner</button><button id="stopScannerBtn" class="secondary" disabled>Stop</button></div>
+      </div>
+      <div class="card">
+        <h3>Deriv Demo connection</h3><p class="muted small">Secure OAuth login. No access token or account ID needs to be pasted into this page.</p>
+        <div id="loginState" class="statusBox"><strong id="loginTitle">Completing login…</strong><p id="loginDetail" class="muted small">Finishing your Deriv authorization.</p></div>
+        <div class="actions"><button id="loginDerivBtn" class="primary">Login with Deriv</button><button id="connectDemoBtn" class="secondary" disabled>Connect demo trading</button><button id="logoutDerivBtn" class="ghost" hidden>Logout</button></div>
+        <label class="toggleRow"><input id="autoExecute" type="checkbox" disabled /><span>Auto-execute qualified demo arbitrage</span></label>
+      </div>
+    </section>
+    <section class="grid three"><article class="card quote"><p class="muted">ONE TOUCH</p><div class="metric"><span>Ask</span><strong id="touchAsk">—</strong></div><div class="metric"><span>Payout</span><strong id="touchPayout">—</strong></div></article><article class="card quote"><p class="muted">NO TOUCH</p><div class="metric"><span>Ask</span><strong id="noTouchAsk">—</strong></div><div class="metric"><span>Payout</span><strong id="noTouchPayout">—</strong></div></article><article class="card quote emphasis"><p class="muted">PAIR ECONOMICS</p><div class="metric"><span>Combined cost</span><strong id="combinedCost">—</strong></div><div class="metric"><span>Locked edge</span><strong id="lockedEdge">—</strong></div></article></section>
+    <section class="card statusCard"><div><p class="muted">ENGINE STATUS</p><h2 id="statusText">Idle</h2><p id="statusDetail" class="muted">Start the public scanner to read live proposals.</p></div><div class="score"><span>Stable checks</span><strong id="stabilityScore">0</strong></div></section>
+    <section class="card"><div class="sectionHeader"><h3>Execution log</h3><button id="clearLogBtn" class="ghost">Clear</button></div><div id="log" class="log"></div></section>
+    <footer>Demo-only research tool. A positive quote edge is not risk-free until both legs are confirmed filled. If one leg fails, the engine stops and attempts an emergency sell when available.</footer>
+  </main>
+  <script type="module" src="../app.js"></script>
+</body>
+</html>
