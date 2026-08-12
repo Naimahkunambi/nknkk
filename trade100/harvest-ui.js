@@ -106,15 +106,51 @@ function improveLog(){
   });
 }
 
+const scannerMarkets=[
+  {id:'aligned:R_25:higherlower',name:'Volatility 25',group:'Core Standard'},
+  {id:'aligned:R_100:higherlower',name:'Volatility 100',group:'Core Standard'},
+  {id:'aligned:1HZ10V:higherlower',name:'Volatility 10 (1s)',group:'Fast Confirm'},
+  {id:'aligned:RDBULL:higherlower',name:'Bull Market',group:'Bull'}
+];
+
+function ensureScanner(){
+  if($('scannerLive')) return;
+  const lanes=[...document.querySelectorAll('.sectionCard')].find(x=>x.textContent.includes('LIVE LANES'));
+  if(!lanes) return;
+  const section=document.createElement('section');
+  section.id='scannerLive';
+  section.className='sectionCard';
+  section.innerHTML=`<div class="sectionTitle"><div><span class="kicker">SCANNER LIVE</span><h2>Why Sani is trading or waiting</h2><p>Each market shows the latest aligned quote. Entry needs edge ≥ +$0.015 and normalized edge > 0.</p></div><span class="softPill" id="scannerPulse">SCANNING</span></div><div id="scannerGrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px"></div>`;
+  lanes.parentNode.insertBefore(section,lanes);
+}
+
+function updateScanner(){
+  ensureScanner();
+  const grid=$('scannerGrid');
+  if(!grid) return;
+  let stats={};
+  try{stats=JSON.parse(localStorage.getItem('sani_harvest_aligned_v1')||'{}')}catch{}
+  const cards=scannerMarkets.map(m=>{
+    const s=stats[m.id]||{};
+    const scans=Number(s.scans||0),edge=Number(s.lastEdge),norm=Number(s.lastNorm);
+    const have=Number.isFinite(edge)&&scans>0;
+    const ready=have&&edge>=0.015&&norm>0;
+    const reason=!have?'Waiting for first quote':ready?'READY TO BUY':edge<0.015?`WAIT · edge ${money(edge)} below +$0.015`:`WAIT · norm ${(norm*100).toFixed(3)}%`;
+    const tone=ready?'#a7f3c7':have?'#f5d477':'#8fa398';
+    return `<article style="background:#0a1510;border:1px solid #1c3225;border-radius:16px;padding:14px"><span style="font-size:9px;color:#718579">${m.group}</span><strong style="display:block;margin:5px 0 9px">${m.name}</strong><div style="display:flex;justify-content:space-between;font-size:10px;color:#81968a"><span>Last edge</span><b style="color:${tone}">${have?money(edge):'—'}</b></div><div style="display:flex;justify-content:space-between;font-size:10px;color:#81968a;margin-top:6px"><span>Normalized</span><b>${have?(norm*100).toFixed(3)+'%':'—'}</b></div><div style="display:flex;justify-content:space-between;font-size:10px;color:#81968a;margin-top:6px"><span>Scans</span><b>${scans}</b></div><div style="margin-top:10px;padding:7px 9px;border-radius:10px;background:#102017;color:${tone};font-size:9px;font-weight:800">${reason}</div></article>`;
+  }).join('');
+  if(grid.innerHTML!==cards) grid.innerHTML=cards;
+  const total=scannerMarkets.reduce((n,m)=>n+Number(stats[m.id]?.scans||0),0);
+  setText('scannerPulse',total?`SCANNING · ${total} quotes`:'SCANNING');
+}
+
 let refreshing=false;
 function refresh(){
   if(refreshing) return;
   refreshing=true;
-  try{ updateSnapshot(); updateReview(); improveLog(); }
+  try{ updateSnapshot(); updateReview(); improveLog(); updateScanner(); }
   finally{ refreshing=false; }
 }
 
-// Deliberately no MutationObserver here. The engine updates the DOM frequently;
-// observing and rewriting the same leaderboard created a self-triggering render loop.
-setInterval(refresh, 750);
+setInterval(refresh,750);
 refresh();
