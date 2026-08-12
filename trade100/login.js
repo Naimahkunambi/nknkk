@@ -2,16 +2,27 @@ const CLIENT_ID='345Q6O96H6J8ANmWhmGkX';
 const REDIRECT='https://sani-arb.vercel.app/callback';
 const loginBtn=document.getElementById('trade100Login');
 const COOLDOWN='sani_harvest_cooldown_until';
+const COUNT='sani_harvest_sessions_today';
+const RECOVERY='sani_harvest_subscribe_bug_recovery_v1';
 let lastSessionState=null;
+
+// One-time recovery for the Aug 12 subscribe validation bug. The affected run opened zero trades,
+// so its technical stop should not consume a session or enforce the old one-hour lock.
+if(localStorage.getItem(RECOVERY)!=='1'){
+  localStorage.setItem(RECOVERY,'1');
+  if(Number(localStorage.getItem(COOLDOWN)||0)>Date.now()){
+    localStorage.removeItem(COOLDOWN);
+    const n=Math.max(0,Number(localStorage.getItem(COUNT)||0)-1);
+    localStorage.setItem(COUNT,String(n));
+  }
+}
 
 function b64(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function remaining(){return Math.max(0,Number(localStorage.getItem(COOLDOWN)||0)-Date.now())}
 function paintCooldown(){if(!loginBtn)return false;const left=remaining();if(left>0){const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);loginBtn.disabled=true;loginBtn.textContent=`Login unlocks ${m}:${String(s).padStart(2,'0')}`;return true}return false}
 async function beginLogin(){if(paintCooldown())return;const random=crypto.getRandomValues(new Uint8Array(64)),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~',verifier=Array.from(random,x=>alphabet[x%alphabet.length]).join(''),digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier)),challenge=b64(new Uint8Array(digest)),state=Array.from(crypto.getRandomValues(new Uint8Array(24)),x=>x.toString(16).padStart(2,'0')).join('');sessionStorage.setItem('sani_pkce_verifier',verifier);sessionStorage.setItem('sani_oauth_state',state);sessionStorage.setItem('sani_return_to','/trade100/');const p=new URLSearchParams({response_type:'code',client_id:CLIENT_ID,redirect_uri:REDIRECT,scope:'trade',state,code_challenge:challenge,code_challenge_method:'S256'});location.assign(`https://auth.deriv.com/oauth2/auth?${p}`)}
 async function finishLogin(){const p=new URLSearchParams(location.search);if(!p.get('code')&&!p.get('error'))return false;if(p.get('error'))throw Error(p.get('error_description')||p.get('error'));const code=p.get('code'),returned=p.get('state'),expected=sessionStorage.getItem('sani_oauth_state'),verifier=sessionStorage.getItem('sani_pkce_verifier');if(!code||returned!==expected||!verifier)throw Error('OAuth validation failed. Please login again.');const r=await fetch('/api/oauth-exchange',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({code,codeVerifier:verifier,redirectUri:REDIRECT})}),b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'Deriv login failed.');sessionStorage.removeItem('sani_pkce_verifier');sessionStorage.removeItem('sani_oauth_state');sessionStorage.removeItem('sani_return_to');history.replaceState({},'', '/trade100/');location.reload();return true}
-async function refreshSessionButton(){if(!loginBtn)return;if(paintCooldown())return;try{const r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'}),b=await r.json().catch(()=>({}));const loggedIn=!!(r.ok&&b.authenticated&&b.demoAccount);if(loggedIn!==lastSessionState){lastSessionState=loggedIn;if(loggedIn){loginBtn.textContent='Deriv Demo Logged In';loginBtn.disabled=true}else{loginBtn.textContent='Login with Deriv';loginBtn.disabled=false}}}catch{if(lastSessionState!==false){lastSessionState=false;loginBtn.textContent='Login with Deriv';loginBtn.disabled=false}}}
+async function refreshSessionButton(){if(!loginBtn||paintCooldown())return;try{const r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'}),b=await r.json().catch(()=>({}));const logged=!!(r.ok&&b.authenticated&&b.demoAccount);if(logged!==lastSessionState){lastSessionState=logged;loginBtn.textContent=logged?'Deriv Demo Logged In':'Login with Deriv';loginBtn.disabled=logged}}catch{lastSessionState=false;loginBtn.textContent='Login with Deriv';loginBtn.disabled=false}}
 if(loginBtn)loginBtn.addEventListener('click',()=>beginLogin().catch(e=>{loginBtn.textContent='Login failed. Try again';console.error(e)}));
-// Cooldown text can update locally every second. Network session checks do not need to.
-setInterval(()=>paintCooldown(),1000);
-setInterval(()=>refreshSessionButton(),15000);
+setInterval(paintCooldown,1000);setInterval(refreshSessionButton,15000);
 (async()=>{try{const completed=await finishLogin();if(completed)return;await refreshSessionButton()}catch(e){if(loginBtn){loginBtn.textContent='Login with Deriv';loginBtn.disabled=false}console.error(e)}})();
