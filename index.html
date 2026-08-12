@@ -67,20 +67,16 @@
       </div>
 
       <div class="card">
-        <h3>Demo execution connection</h3>
-        <p class="muted small">Credentials stay only in this browser session. They are never written to GitHub.</p>
-        <label>Deriv App ID
-          <input id="appId" autocomplete="off" placeholder="Your Deriv app ID" />
-        </label>
-        <label>Demo account ID
-          <input id="accountId" autocomplete="off" placeholder="Demo Options account ID" />
-        </label>
-        <label>Access token with trade scope
-          <input id="accessToken" type="password" autocomplete="off" placeholder="Paste locally, not into chat" />
-        </label>
+        <h3>Deriv Demo connection</h3>
+        <p class="muted small">Secure OAuth login. No access token or account ID needs to be pasted into this page.</p>
+        <div id="loginState" class="statusBox">
+          <strong id="loginTitle">Not logged in</strong>
+          <p id="loginDetail" class="muted small">Sign in with Deriv. Sani Arb will automatically select your demo Options account.</p>
+        </div>
         <div class="actions">
-          <button id="connectDemoBtn" class="primary">Connect demo</button>
-          <button id="disconnectDemoBtn" class="secondary" disabled>Disconnect</button>
+          <button id="loginDerivBtn" class="primary">Login with Deriv</button>
+          <button id="connectDemoBtn" class="secondary" disabled>Connect demo trading</button>
+          <button id="logoutDerivBtn" class="ghost" hidden>Logout</button>
         </div>
         <label class="toggleRow">
           <input id="autoExecute" type="checkbox" disabled />
@@ -128,7 +124,7 @@
     </section>
 
     <footer>
-      Demo-first research tool. A positive quote edge is not risk-free until both legs are confirmed filled. If one leg fails, the engine stops and attempts an emergency sell when available.
+      Demo-only research tool. A positive quote edge is not risk-free until both legs are confirmed filled. If one leg fails, the engine stops and attempts an emergency sell when available.
     </footer>
   </main>
   <script type="module" src="./app.js"></script>
