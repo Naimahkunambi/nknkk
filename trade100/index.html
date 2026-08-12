@@ -1,1 +1,114 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0b0c"><title>Sani Harvest · +$5 Demo Session</title><link rel="stylesheet" href="/styles.css"><style>.harvestHero{margin:20px 0}.bigStart{font-size:18px;padding:15px 22px}.statusLine{font-size:28px;margin:0}.good{color:#9ef0c8}.bad{color:#ff9ba1}.warnText{color:#ffe18a}.sessionMetrics{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin:16px 0}.windowBoard{margin:16px 0}.windowGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.window{background:#0e0e10;border:1px solid #303038;border-radius:14px;padding:14px}.window>div:first-child{display:flex;justify-content:space-between;gap:10px}.window p{font-size:12px;color:#aaa}.window small{color:#7f7f86}.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #25252a;margin-top:8px;font-size:11px}.candidateStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.candidate{background:#0e0e10;border:1px solid #303038;border-radius:14px;padding:14px}.candidate strong,.candidate small{display:block}.candidate small{color:#888;margin-top:5px}.lockBox{background:#17120b;border:1px solid #4b3c1a;border-radius:14px;padding:14px;margin-top:14px}.loginRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}@media(max-width:1050px){.sessionMetrics{grid-template-columns:repeat(4,1fr)}.windowGrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.sessionMetrics{grid-template-columns:repeat(2,1fr)}.windowGrid,.candidateStrip{grid-template-columns:1fr}}</style></head><body><main class="shell"><header class="topbar"><div><p class="eyebrow">SANI ARB · DERIV DEMO ONLY</p><h1>Sani Harvest</h1><p class="muted">Small paired trades. Three candidate groups. Stop when enough is enough.</p></div><div class="topActions"><button id="trade100Login" class="primary">Login with Deriv</button><a class="ghost" href="/">Discovery Lab</a></div></header><section class="card harvestHero"><div class="sectionHeader"><div><p class="eyebrow">ACCOUNT</p><h2 id="account">Checking Demo session…</h2></div><div><p class="eyebrow">ENGINE</p><h2 id="status" class="statusLine">LOADING</h2></div></div><p id="detail" class="muted">Preparing disciplined session controls.</p><div class="candidateStrip"><div class="candidate"><strong>1 · Core Standard</strong><span>Higher / Lower</span><small>Volatility 25 Index + Volatility 100 Index</small></div><div class="candidate"><strong>2 · Fast Confirm</strong><span>Higher / Lower</span><small>Volatility 10 (1s) Index</small></div><div class="candidate"><strong>3 · Bull</strong><span>Higher / Lower</span><small>Bull Market Index</small></div></div><div class="grid two tight" style="margin-top:14px"><label>Session profit target<input id="profitTarget" type="number" value="5.00" disabled></label><label>Hard session loss cap<input id="lossCap" type="number" value="2.00" disabled></label><label>Hard max paired entries<input id="maxEntries" type="number" value="100" disabled></label><label>Payout per leg (USD)<input id="payout" type="number" min="0.35" step="0.01" value="1.00"></label><label>Minimum quote surplus<input id="minEdge" type="number" min="0" step="0.001" value="0.01"></label><label>Safety buffer<input id="buffer" type="number" min="0" step="0.001" value="0.005"></label></div><div class="lockBox"><strong id="disciplineTitle">Session discipline</strong><p id="disciplineText" class="muted small" style="margin:5px 0 0">+$5 reached: stop new entries, finish open pairs, then 60-minute lock. Socket interruption: 5-minute technical cooldown before Deriv login unlocks. Maximum 5 sessions per local day.</p></div><div class="actions"><button id="start" class="primary bigStart">START +$5 DEMO SESSION</button><button id="stop" class="danger" disabled>STOP NEW ENTRIES</button></div><p class="warning small">Virtual funds only. These Higher/Lower pairs are RESEARCH pairs with a dead-zone possibility, not guaranteed arbitrage. Sani ranks actual settled P/L and double-loss events.</p></section><section class="sessionMetrics"><article class="card metricCard"><span>Session P/L</span><strong id="pnl">$0.0000</strong></article><article class="card metricCard"><span>Goal</span><strong>+$5.00</strong></article><article class="card metricCard"><span>Paired entries</span><strong id="entries">0/100</strong></article><article class="card metricCard"><span>Settled</span><strong id="settled">0</strong></article><article class="card metricCard"><span>Active lanes</span><strong id="active">0/4</strong></article><article class="card metricCard"><span>Sessions today</span><strong id="sessionsToday">0/5</strong></article><article class="card metricCard"><span>Cooldown</span><strong id="cooldown">READY</strong></article></section><section class="card windowBoard"><div class="sectionHeader"><div><p class="eyebrow">MULTI-WINDOW</p><h3>Open paired positions</h3></div><span id="universe" class="muted small">Chosen markets load on start</span></div><div id="windowsGrid" class="windowGrid"><div class="empty">No open pair windows.</div></div></section><section class="card"><div class="sectionHeader"><div><p class="eyebrow">MONEY MAKERS vs DRAINERS</p><h3>Chosen candidates only</h3></div><span class="muted small">Realized P/L first. Double-losses matter.</span></div><div class="tableWrap"><table><thead><tr><th>#</th><th>Group</th><th>Market</th><th>Settled</th><th>Wins</th><th>Double loss</th><th>Fill</th><th>Last quote</th><th>Realized P/L</th></tr></thead><tbody id="board"><tr><td colspan="9" class="empty">Results load after connection.</td></tr></tbody></table></div></section><section class="card" style="margin-top:16px"><div class="sectionHeader"><div><p class="eyebrow">FORENSICS</p><h3>Every entry and settlement</h3></div><button id="clear" class="ghost">Clear</button></div><div id="log" class="log"></div></section><footer>Demo-only research. Session limits are self-imposed risk controls, not a promise of profit and not a Deriv requirement.</footer></main><script type="module" src="/trade100/login.js"></script><script type="module" src="/trade100/multi-window.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07120d">
+  <title>Sani Harvest · Demo</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root{
+      --harvest-bg:#07100c;--harvest-panel:#0d1812;--harvest-panel-2:#101e16;--harvest-line:#1d3528;
+      --harvest-mint:#a7f3c7;--harvest-green:#62d992;--harvest-deep:#163d29;--harvest-cream:#f4f4e9;
+      --harvest-muted:#8fa398;--harvest-amber:#f5d477;--harvest-red:#ff9c9c;--harvest-soft:#d8f7e4;
+    }
+    body{background:radial-gradient(circle at 80% -10%,rgba(98,217,146,.13),transparent 34%),linear-gradient(180deg,#06100b,#08130e 45%,#06100b);color:var(--harvest-cream)}
+    .shell{max-width:1240px}
+    .harvestTop{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;margin:12px 0 20px}
+    .brandRow{display:flex;align-items:center;gap:11px}.leafMark{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#183d2a,#0f281d);border:1px solid #28563d;font-size:20px;box-shadow:0 10px 28px rgba(0,0,0,.25)}
+    .harvestTop h1{font-size:42px;margin:0 0 4px;letter-spacing:-.035em}.harvestTop .tagline{margin:0;color:#9fb4a8;font-size:14px}
+    .statusStack{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.softPill{border-radius:999px;padding:10px 14px;border:1px solid var(--harvest-line);background:#0b1811;color:#cfe8d8;font-size:12px;font-weight:750}.softPill strong{color:var(--harvest-mint)}
+    #trade100Login{background:var(--harvest-mint);color:#092014;border-radius:999px;padding:11px 17px;box-shadow:0 7px 22px rgba(98,217,146,.14)}
+    .heroHarvest{background:linear-gradient(145deg,rgba(19,46,32,.95),rgba(11,26,18,.96));border:1px solid #254631;border-radius:24px;padding:22px;box-shadow:0 22px 65px rgba(0,0,0,.28);position:relative;overflow:hidden}
+    .heroHarvest:after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;right:-110px;top:-150px;background:rgba(98,217,146,.08);pointer-events:none}
+    .heroMain{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.accountLabel{font-size:10px;letter-spacing:.18em;color:#89a396}.accountValue{font-size:23px;font-weight:800;margin:4px 0}.engineBox{text-align:right}.engineState{font-size:24px;font-weight:850;color:var(--harvest-mint)}
+    .plainSummary{margin:10px 0 0;color:#acc3b5;font-size:13px}.plainSummary strong{color:var(--harvest-soft)}
+    .snapshot{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr 1fr 1fr 1fr;gap:11px;margin:16px 0}
+    .snap{background:rgba(13,24,18,.94);border:1px solid #1f3528;border-radius:18px;padding:15px;min-height:86px;position:relative;overflow:hidden}.snap span{font-size:10px;color:#8fa399;display:block;margin-bottom:6px}.snap strong{font-size:25px;display:block;letter-spacing:-.025em}.snap small{display:block;color:#71877b;margin-top:4px;font-size:10px}.snap.primary{background:linear-gradient(145deg,#163622,#10281a);border-color:#2a593a}.snap.primary strong{color:var(--harvest-mint)}.snap.caution strong{color:var(--harvest-amber)}
+    .progressWrap{background:#0a160f;border:1px solid #1e3528;border-radius:18px;padding:13px 15px;margin-top:12px}.progressHead{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#91a79b;margin-bottom:9px}.progressTrack{height:10px;border-radius:999px;background:#17241c;overflow:hidden;position:relative}.progressFill{height:100%;width:28.57%;background:linear-gradient(90deg,#ecb66f,#7ee4a5);border-radius:999px;transition:width .35s ease}.progressMarker{position:absolute;left:28.57%;top:-2px;width:2px;height:14px;background:white;opacity:.75;transition:left .35s ease}
+    .sectionCard{background:rgba(12,22,16,.93);border:1px solid #1d3326;border-radius:22px;padding:20px;margin-top:15px;box-shadow:0 18px 48px rgba(0,0,0,.18)}.sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}.sectionTitle h2{font-size:18px;margin:2px 0}.sectionTitle p{font-size:11px;color:#7f9588;margin:0}.kicker{font-size:10px;letter-spacing:.17em;color:#75a287}
+    .candidateStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.candidate{background:#0a1510;border:1px solid #1c3225;border-radius:16px;padding:14px;position:relative}.candidate:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:4px;background:#437659}.candidate strong{display:block;font-size:13px}.candidate span{display:block;font-size:11px;color:#a6baaF;margin-top:3px}.candidate small{display:block;color:#6f8578;margin-top:6px;font-size:10px}
+    .controlsGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:15px}.controlMini{background:#0a1510;border:1px solid #1c3225;border-radius:14px;padding:12px}.controlMini label{margin:0;color:#81968a;font-size:10px}.controlMini input{margin-top:6px;border:0;background:transparent;padding:0;color:#eef7f1;font-size:17px;font-weight:750;box-shadow:none}.controlMini input:focus{border:0}.controlMini input:disabled{opacity:1}
+    .disciplineBar{display:flex;justify-content:space-between;gap:18px;align-items:center;background:#10241a;border:1px solid #294a35;border-radius:16px;padding:14px 16px;margin-top:12px}.disciplineBar strong{font-size:12px;color:#cdebd9}.disciplineBar p{font-size:10px;color:#8da597;margin:3px 0 0}.actions{margin-top:12px}.bigStart{background:linear-gradient(135deg,#abf6c8,#70dda0);color:#072015;font-size:14px;padding:13px 19px;border-radius:13px;box-shadow:0 10px 24px rgba(98,217,146,.12)}.danger{border-radius:13px}.warning{background:#211b0d;color:#f4d883;border-color:#584719;border-radius:13px;font-size:10px}
+    .moodCard{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:10px;margin-top:12px}.moodItem{background:#0a1510;border:1px solid #1c3225;border-radius:15px;padding:13px}.moodItem span{font-size:9px;color:#70877a;display:block}.moodItem strong{display:block;font-size:14px;margin-top:4px}.moodGrowing{color:var(--harvest-mint)}.moodCaution{color:var(--harvest-amber)}.moodBad{color:var(--harvest-red)}
+    .windowGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.window{background:linear-gradient(145deg,#0d2016,#09150f)!important;border:1px solid #21412d!important;border-radius:17px!important;padding:15px!important}.window>div:first-child{display:flex;justify-content:space-between;gap:10px}.window p{font-size:12px;color:#bdd0c4;margin:7px 0}.window small{color:#6f8a79}.window .row{border-color:#1a3223;font-size:10px}.empty{color:#647b6d!important}
+    .reviewSummary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}.reviewBox{background:#0a1510;border:1px solid #1c3225;border-radius:15px;padding:13px}.reviewBox span{font-size:9px;color:#718579;display:block}.reviewBox strong{display:block;font-size:15px;margin-top:4px}.reviewBox.best strong{color:var(--harvest-mint)}.reviewBox.worst strong{color:var(--harvest-red)}
+    .tableWrap{border:1px solid #183024;border-radius:16px;overflow:auto}.tableWrap table{min-width:940px}.tableWrap th{background:#0c1912;color:#6f8879;padding:11px;font-size:9px}.tableWrap td{border-color:#17291f;padding:12px 11px;color:#cad8d0;font-size:11px}.tableWrap tr:hover td{background:#102017}.verdict{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:9px;font-weight:800;letter-spacing:.06em}.verdict.keep{background:#153a27;color:#aaf4c9}.verdict.watch{background:#3d3214;color:#f5dc88}.verdict.drop{background:#481d22;color:#ffb2b6}.verdict.scan{background:#1c2822;color:#99ad9f}
+    .forensicsShell{background:#07100c;border:1px solid #183024;border-radius:16px;padding:8px;max-height:360px;overflow:auto}.log{background:transparent!important;max-height:none!important;min-height:100px!important;padding:0!important}.log>div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;border:0!important;background:#0b1710;margin:6px 0;border-radius:12px;padding:10px 11px!important;color:#9fb1a7!important}.log>div:before{content:"•";width:22px;height:22px;border-radius:8px;background:#193326;display:grid;place-items:center;color:#86dbaa;font-size:13px}.log>div.good{background:#0c1e14;color:#bfe8cd!important}.log>div.good:before{content:"✓";background:#173d29;color:#a9f2c7}.log>div.bad{background:#201112;color:#ffc2c2!important}.log>div.bad:before{content:"!";background:#4a1e22;color:#ffb4b4}.log>div.warn{background:#211c0e;color:#f4df9c!important}.log>div.warn:before{content:"⏳";background:#433715}.log>div.info:before{content:"↻"}
+    .log .eventBadge{display:inline-flex;padding:3px 7px;border-radius:999px;background:#173025;color:#9ddbb7;font-size:8px;font-weight:850;letter-spacing:.08em;margin-right:7px}
+    footer{color:#526b5d;margin-top:20px}
+    @media(max-width:1100px){.snapshot{grid-template-columns:repeat(4,1fr)}.controlsGrid{grid-template-columns:repeat(3,1fr)}.windowGrid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:760px){.harvestTop,.heroMain,.disciplineBar{flex-direction:column}.statusStack,.engineBox{text-align:left;justify-content:flex-start}.snapshot{grid-template-columns:repeat(2,1fr)}.candidateStrip,.moodCard,.reviewSummary{grid-template-columns:1fr}.controlsGrid{grid-template-columns:repeat(2,1fr)}.windowGrid{grid-template-columns:1fr}.harvestTop h1{font-size:34px}.snap strong{font-size:22px}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header class="harvestTop">
+    <div>
+      <div class="brandRow"><div class="leafMark">🌿</div><div><p class="eyebrow">SANI ARB · DERIV DEMO ONLY</p><h1>Sani Harvest</h1></div></div>
+      <p class="tagline">Tiny aligned edges. Clear numbers. Grateful exits.</p>
+    </div>
+    <div class="statusStack"><span class="softPill" id="topCooldownPill">Cooldown <strong>READY</strong></span><button id="trade100Login" class="primary">Login with Deriv</button></div>
+  </header>
+
+  <section class="heroHarvest">
+    <div class="heroMain">
+      <div><span class="accountLabel">DEMO ACCOUNT</span><div id="account" class="accountValue">Checking Demo session…</div><p id="detail" class="plainSummary">Preparing aligned pair controls.</p></div>
+      <div class="engineBox"><span class="accountLabel">HARVEST HEALTH</span><div id="status" class="engineState">LOADING</div><div id="moodText" class="plainSummary">Reading the garden.</div></div>
+    </div>
+    <div class="snapshot">
+      <article class="snap primary"><span>SESSION P/L</span><strong id="pnl">$0.0000</strong><small>settled money only</small></article>
+      <article class="snap"><span>LEFT TO +$5</span><strong id="leftGoal">$5.00</strong><small>then Sani stops</small></article>
+      <article class="snap caution"><span>LOSS CUSHION</span><strong id="lossRoom">$2.00</strong><small>before safety stop</small></article>
+      <article class="snap"><span>ENTRIES USED</span><strong id="entries">0/100</strong><small>paired entries</small></article>
+      <article class="snap"><span>SETTLED</span><strong id="settled">0</strong><small>completed pairs</small></article>
+      <article class="snap"><span>ACTIVE LANES</span><strong id="active">0/4</strong><small>open pairs</small></article>
+      <article class="snap"><span>UNLOCK IN</span><strong id="cooldown">READY</strong><small id="sessionsToday">0/5 sessions</small></article>
+    </div>
+    <div class="progressWrap"><div class="progressHead"><span>Safety stop −$2</span><strong id="plainMath">Need +$5.00 more to finish this session.</strong><span>Grateful stop +$5</span></div><div class="progressTrack"><div id="harvestProgress" class="progressFill"></div><div id="harvestMarker" class="progressMarker"></div></div></div>
+  </section>
+
+  <section class="sectionCard">
+    <div class="sectionTitle"><div><span class="kicker">SESSION CONTROLS</span><h2>What Sani is allowed to do</h2><p>The math stays visible, but you should not need to calculate anything.</p></div><span class="softPill">Same barrier · same expiry</span></div>
+    <div class="candidateStrip">
+      <div class="candidate"><strong>1 · Core Standard</strong><span>Higher / Lower</span><small>Volatility 25 Index + Volatility 100 Index</small></div>
+      <div class="candidate"><strong>2 · Fast Confirm</strong><span>Higher / Lower</span><small>Volatility 10 (1s) Index</small></div>
+      <div class="candidate"><strong>3 · Bull</strong><span>Higher / Lower</span><small>Bull Market Index</small></div>
+    </div>
+    <div class="controlsGrid">
+      <div class="controlMini"><label>Profit target<input id="profitTarget" type="number" value="5.00" disabled></label></div>
+      <div class="controlMini"><label>Loss cap<input id="lossCap" type="number" value="2.00" disabled></label></div>
+      <div class="controlMini"><label>Max entries<input id="maxEntries" type="number" value="100" disabled></label></div>
+      <div class="controlMini"><label>Payout / leg<input id="payout" type="number" min="0.35" step="0.01" value="1.00"></label></div>
+      <div class="controlMini"><label>Minimum edge<input id="minEdge" type="number" min="0" step="0.001" value="0.01"></label></div>
+      <div class="controlMini"><label>Safety buffer<input id="buffer" type="number" min="0" step="0.001" value="0.005"></label></div>
+    </div>
+    <div class="disciplineBar"><div><strong>🌱 Session discipline</strong><p>+$5 stop · −$2 stop · socket interruption 5-minute cooldown · completed session 60-minute lock · max 5 sessions/day.</p></div><span class="softPill" id="disciplineState">Sani controls the pace</span></div>
+    <div class="actions"><button id="start" class="primary bigStart">START ALIGNED DEMO SESSION</button><button id="stop" class="danger" disabled>STOP NEW ENTRIES</button></div>
+    <p class="warning small">Virtual funds only. Same-barrier Higher/Lower removes the large +0.5 / −0.5 dead zone, but exact equality and non-atomic execution can still create risk. Positive quotes are not guaranteed profit.</p>
+    <div class="moodCard"><div class="moodItem"><span>SESSION MOOD</span><strong id="sessionMood" class="moodGrowing">READY 🌿</strong></div><div class="moodItem"><span>BEST MARKET</span><strong id="bestMarket">Waiting for evidence</strong></div><div class="moodItem"><span>MOST CONCERNING</span><strong id="worstMarket">None yet</strong></div></div>
+  </section>
+
+  <section class="sectionCard">
+    <div class="sectionTitle"><div><span class="kicker">LIVE LANES</span><h2>What is open right now</h2><p>Each card is one aligned pair. No hunting through logs.</p></div><span id="universe" class="softPill">Markets load on start</span></div>
+    <div id="windowsGrid" class="windowGrid"><div class="empty">Nothing open. The garden is resting. 🌱</div></div>
+  </section>
+
+  <section class="sectionCard">
+    <div class="sectionTitle"><div><span class="kicker">MONEY MAKERS vs DRAINERS</span><h2>Fresh aligned evidence</h2><p>Old +0.5 / −0.5 results stay excluded.</p></div><span class="softPill">Realized P/L first</span></div>
+    <div class="reviewSummary"><div class="reviewBox best"><span>TOP MONEY MAKER</span><strong id="reviewBest">Waiting for settlements</strong></div><div class="reviewBox worst"><span>BIGGEST DRAINER</span><strong id="reviewWorst">None yet</strong></div><div class="reviewBox"><span>SESSION WIN RATE</span><strong id="winRate">—</strong></div></div>
+    <div class="tableWrap"><table><thead><tr><th>#</th><th>Group</th><th>Market</th><th>Settled</th><th>Wins</th><th>Double loss</th><th>Fill</th><th>Aligned quote</th><th>Realized P/L</th><th>Verdict</th></tr></thead><tbody id="board"><tr><td colspan="10" class="empty">Aligned markets load after connection.</td></tr></tbody></table></div>
+  </section>
+
+  <section class="sectionCard">
+    <div class="sectionTitle"><div><span class="kicker">FORENSICS FEED</span><h2>What just happened</h2><p>Readable events instead of a wall of machine text.</p></div><button id="clear" class="ghost">Clear feed</button></div>
+    <div class="forensicsShell"><div id="log" class="log"></div></div>
+  </section>
+
+  <footer>Demo-only research · aligned barrier and common expiry enforced before entry.</footer>
+</main>
+<script type="module" src="/trade100/login.js"></script>
+<script type="module" src="/trade100/multi-window.js"></script>
+<script type="module" src="/trade100/harvest-ui.js"></script>
+</body>
+</html>
