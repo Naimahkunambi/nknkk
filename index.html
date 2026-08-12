@@ -10,84 +10,17 @@
 <body>
 <main class="shell">
   <header class="topbar">
-    <div>
-      <p class="eyebrow">DERIV DEMO · DISCOVERY LAB</p>
-      <h1>Sani Arb</h1>
-      <p class="muted">Scan the contract ecosystem. Keep evidence. Drop losers.</p>
-    </div>
-    <div class="topActions">
-      <span id="modePill" class="pill neutral">IDLE</span>
-      <button id="emergencyBtn" class="danger" disabled>Emergency stop</button>
-    </div>
+    <div><p class="eyebrow">DERIV DEMO · DISCOVERY LAB</p><h1>Sani Arb</h1><p class="muted">Scan the contract ecosystem. Keep evidence. Drop losers.</p></div>
+    <div class="topActions"><a class="primary" style="text-decoration:none;border-radius:12px;padding:11px 15px;font-weight:750" href="/trade100/">100-Entry Multi-Window</a><span id="modePill" class="pill neutral">IDLE</span><button id="emergencyBtn" class="danger" disabled>Emergency stop</button></div>
   </header>
-
-  <section class="hero card">
-    <div>
-      <p class="eyebrow">MODE</p>
-      <h2>Pair Discovery Engine</h2>
-      <p class="muted">All discovered contracts are catalogued. Economically plausible opposite pairs are quote-tested and ranked. Demo execution is optional and one pair at a time.</p>
-    </div>
-    <div class="heroScore">
-      <span>Best live edge</span>
-      <strong id="bestEdge">—</strong>
-      <small id="bestPair" class="muted">Waiting for scan</small>
-    </div>
-  </section>
-
-  <section class="grid two">
-    <article class="card">
-      <h3>Discovery controls</h3>
-      <div class="grid two tight">
-        <label>Target payout per leg (USD)<input id="targetPayout" type="number" min="0.35" step="0.01" value="1.00"></label>
-        <label>Minimum quoted edge (USD)<input id="minEdge" type="number" min="0" step="0.001" value="0.01"></label>
-        <label>Execution safety buffer (USD)<input id="safetyBuffer" type="number" min="0" step="0.001" value="0.005"></label>
-        <label>Scan delay per configuration (ms)<input id="scanDelay" type="number" min="250" max="10000" step="50" value="750"></label>
-        <label>Positive quotes before demo<input id="stableChecks" type="number" min="1" max="20" value="3"></label>
-        <label>Evaluate after demo pairs<input id="evaluationPairs" type="number" min="5" max="500" value="20"></label>
-      </div>
-      <label class="toggleRow"><input id="includeRiskPairs" type="checkbox" checked><span>Include gap/start-sync pairs in the demo tournament</span></label>
-      <label class="toggleRow"><input id="autoDrop" type="checkbox" checked><span>Auto-drop configurations that are negative after the evaluation sample</span></label>
-      <div class="actions"><button id="startBtn" class="primary">Start discovery</button><button id="stopBtn" class="secondary" disabled>Stop</button><button id="resetResultsBtn" class="ghost">Reset results</button></div>
-    </article>
-
-    <article class="card">
-      <h3>Deriv Demo</h3>
-      <div class="statusBox"><strong id="loginTitle">Checking session…</strong><p id="loginDetail" class="muted small">OAuth login uses the connected Sani Arb app.</p></div>
-      <div class="actions"><button id="loginDerivBtn" class="primary">Login with Deriv</button><button id="connectDemoBtn" class="secondary" disabled>Connect demo trading</button><button id="logoutDerivBtn" class="ghost" hidden>Logout</button></div>
-      <div class="actions"><button id="enableTournamentBtn" class="primary">Enable Demo Tournament</button></div>
-      <label class="toggleRow tournamentToggle"><input id="tournamentEnabled" type="checkbox" disabled><span><strong>Demo tournament</strong><br><small>Re-quotes the best qualified candidate and submits both legs concurrently. Never real money.</small></span></label>
-      <p class="warning small">Two buys are not atomic. If only one leg fills, Sani stops the tournament and attempts an emergency market sell of the lone leg.</p>
-    </article>
-  </section>
-
-  <section class="grid four metrics">
-    <article class="card metricCard"><span>Synthetic symbols</span><strong id="symbolCount">0</strong></article>
-    <article class="card metricCard"><span>Contracts discovered</span><strong id="contractCount">0</strong></article>
-    <article class="card metricCard"><span>Pair configurations</span><strong id="candidateCount">0</strong></article>
-    <article class="card metricCard"><span>Demo pairs settled</span><strong id="settledCount">0</strong></article>
-  </section>
-
-  <section class="grid three liveGrid">
-    <article class="card"><p class="eyebrow">LEG A</p><h3 id="legAName">—</h3><div class="kv"><span>Ask</span><strong id="legAAsk">—</strong></div><div class="kv"><span>Payout</span><strong id="legAPayout">—</strong></div></article>
-    <article class="card"><p class="eyebrow">LEG B</p><h3 id="legBName">—</h3><div class="kv"><span>Ask</span><strong id="legBAsk">—</strong></div><div class="kv"><span>Payout</span><strong id="legBPayout">—</strong></div></article>
-    <article class="card emphasis"><p class="eyebrow">PAIR ECONOMICS</p><h3 id="livePairName">No live candidate</h3><div class="kv"><span>Combined cost</span><strong id="combinedCost">—</strong></div><div class="kv"><span>Quoted edge</span><strong id="quotedEdge">—</strong></div><div class="kv"><span>Quote skew</span><strong id="quoteSkew">—</strong></div></article>
-  </section>
-
+  <section class="hero card"><div><p class="eyebrow">MODE</p><h2>Pair Discovery Engine</h2><p class="muted">All discovered contracts are catalogued. Economically plausible opposite pairs are quote-tested and ranked. Demo execution is optional and one pair at a time.</p></div><div class="heroScore"><span>Best live edge</span><strong id="bestEdge">—</strong><small id="bestPair" class="muted">Waiting for scan</small></div></section>
+  <section class="grid two"><article class="card"><h3>Discovery controls</h3><div class="grid two tight"><label>Target payout per leg (USD)<input id="targetPayout" type="number" min="0.35" step="0.01" value="1.00"></label><label>Minimum quoted edge (USD)<input id="minEdge" type="number" min="0" step="0.001" value="0.01"></label><label>Execution safety buffer (USD)<input id="safetyBuffer" type="number" min="0" step="0.001" value="0.005"></label><label>Scan delay per configuration (ms)<input id="scanDelay" type="number" min="250" max="10000" step="50" value="750"></label><label>Positive quotes before demo<input id="stableChecks" type="number" min="1" max="20" value="3"></label><label>Evaluate after demo pairs<input id="evaluationPairs" type="number" min="5" max="500" value="20"></label></div><label class="toggleRow"><input id="includeRiskPairs" type="checkbox" checked><span>Include gap/start-sync pairs in the demo tournament</span></label><label class="toggleRow"><input id="autoDrop" type="checkbox" checked><span>Auto-drop configurations that are negative after the evaluation sample</span></label><div class="actions"><button id="startBtn" class="primary">Start discovery</button><button id="stopBtn" class="secondary" disabled>Stop</button><button id="resetResultsBtn" class="ghost">Reset results</button></div></article><article class="card"><h3>Deriv Demo</h3><div class="statusBox"><strong id="loginTitle">Checking session…</strong><p id="loginDetail" class="muted small">OAuth login uses the connected Sani Arb app.</p></div><div class="actions"><button id="loginDerivBtn" class="primary">Login with Deriv</button><button id="connectDemoBtn" class="secondary" disabled>Connect demo trading</button><button id="logoutDerivBtn" class="ghost" hidden>Logout</button></div><div class="actions"><button id="enableTournamentBtn" class="primary">Enable Demo Tournament</button></div><label class="toggleRow tournamentToggle"><input id="tournamentEnabled" type="checkbox" disabled><span><strong>Demo tournament</strong><br><small>Re-quotes the best qualified candidate and submits both legs concurrently. Never real money.</small></span></label><p class="warning small">Two buys are not atomic. If only one leg fills, Sani stops the tournament and attempts an emergency market sell of the lone leg.</p></article></section>
+  <section class="grid four metrics"><article class="card metricCard"><span>Synthetic symbols</span><strong id="symbolCount">0</strong></article><article class="card metricCard"><span>Contracts discovered</span><strong id="contractCount">0</strong></article><article class="card metricCard"><span>Pair configurations</span><strong id="candidateCount">0</strong></article><article class="card metricCard"><span>Demo pairs settled</span><strong id="settledCount">0</strong></article></section>
+  <section class="grid three liveGrid"><article class="card"><p class="eyebrow">LEG A</p><h3 id="legAName">—</h3><div class="kv"><span>Ask</span><strong id="legAAsk">—</strong></div><div class="kv"><span>Payout</span><strong id="legAPayout">—</strong></div></article><article class="card"><p class="eyebrow">LEG B</p><h3 id="legBName">—</h3><div class="kv"><span>Ask</span><strong id="legBAsk">—</strong></div><div class="kv"><span>Payout</span><strong id="legBPayout">—</strong></div></article><article class="card emphasis"><p class="eyebrow">PAIR ECONOMICS</p><h3 id="livePairName">No live candidate</h3><div class="kv"><span>Combined cost</span><strong id="combinedCost">—</strong></div><div class="kv"><span>Quoted edge</span><strong id="quotedEdge">—</strong></div><div class="kv"><span>Quote skew</span><strong id="quoteSkew">—</strong></div></article></section>
   <section class="card statusCard"><div><p class="eyebrow">ENGINE STATUS</p><h2 id="statusText">Idle</h2><p id="statusDetail" class="muted">Start discovery to load active Synthetic Indices and available contracts.</p></div><div class="score"><span>Round</span><strong id="roundCount">0</strong></div></section>
-
-  <section class="card">
-    <div class="sectionHeader"><div><p class="eyebrow">LEADERBOARD</p><h3>Evidence, not promises</h3></div><div class="legend"><span class="badge keep">KEEP</span><span class="badge watch">WATCH</span><span class="badge drop">DROP</span><span class="badge scan">SCAN</span></div></div>
-    <div class="tableWrap"><table><thead><tr><th>#</th><th>Pair</th><th>Market</th><th>Risk</th><th>Last edge</th><th>Scans</th><th>Demo</th><th>Fill</th><th>Realized P/L</th><th>Verdict</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="10" class="empty">No evidence yet.</td></tr></tbody></table></div>
-  </section>
-
-  <section class="grid two bottomGrid">
-    <article class="card"><div class="sectionHeader"><div><p class="eyebrow">CONTRACT CATALOGUE</p><h3>What Deriv actually exposes</h3></div></div><div id="contractCatalog" class="catalog"><p class="muted small">Loads when discovery starts.</p></div></article>
-    <article class="card"><div class="sectionHeader"><div><p class="eyebrow">EXECUTION LOG</p><h3>Forensics</h3></div><button id="clearLogBtn" class="ghost">Clear</button></div><div id="log" class="log"></div></article>
-  </section>
-
+  <section class="card"><div class="sectionHeader"><div><p class="eyebrow">LEADERBOARD</p><h3>Evidence, not promises</h3></div><div class="legend"><span class="badge keep">KEEP</span><span class="badge watch">WATCH</span><span class="badge drop">DROP</span><span class="badge scan">SCAN</span></div></div><div class="tableWrap"><table><thead><tr><th>#</th><th>Pair</th><th>Market</th><th>Risk</th><th>Last edge</th><th>Scans</th><th>Demo</th><th>Fill</th><th>Realized P/L</th><th>Verdict</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="10" class="empty">No evidence yet.</td></tr></tbody></table></div></section>
+  <section class="grid two bottomGrid"><article class="card"><div class="sectionHeader"><div><p class="eyebrow">CONTRACT CATALOGUE</p><h3>What Deriv actually exposes</h3></div></div><div id="contractCatalog" class="catalog"><p class="muted small">Loads when discovery starts.</p></div></article><article class="card"><div class="sectionHeader"><div><p class="eyebrow">EXECUTION LOG</p><h3>Forensics</h3></div><button id="clearLogBtn" class="ghost">Clear</button></div><div id="log" class="log"></div></article></section>
   <footer>Demo-only research software. A positive quoted edge is not guaranteed profit. Ranking uses actual settled demo P/L whenever demo execution is enabled.</footer>
 </main>
-<script type="module" src="/app.js"></script>
-<script type="module" src="/demo-fix.js"></script>
-</body>
-</html>
+<script type="module" src="/app.js"></script><script type="module" src="/demo-fix.js"></script>
+</body></html>
