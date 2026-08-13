@@ -1,0 +1,1 @@
+try{const oldKey='sani_probability_lab_v2',newKey='sani_probability_lab_v3';if(!localStorage.getItem(newKey)&&localStorage.getItem(oldKey)){localStorage.setItem(newKey,localStorage.getItem(oldKey));console.info('Sani Probability Lab: migrated v2 Demo evidence into v3.')}}catch(e){console.warn('Sani evidence migration skipped',e);}
